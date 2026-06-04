@@ -1,0 +1,1284 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sanitation Supervisor Daily Shift Report</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --surface: #ffffff;
+      --primary: #1f6f8b;
+      --primary-dark: #15566d;
+      --success: #198754;
+      --warning: #b7791f;
+      --danger: #b42318;
+      --text: #1f2937;
+      --muted: #64748b;
+      --border: #d8dee8;
+      --soft: #edf3f7;
+      --shadow: 0 10px 24px rgba(31, 41, 55, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+
+    button, input, textarea, select {
+      font: inherit;
+    }
+
+    button {
+      min-height: 42px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 0.65rem 0.9rem;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.94);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+    }
+
+    .topbar-inner {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(1.05rem, 2vw, 1.45rem);
+      letter-spacing: 0;
+    }
+
+    .brand p {
+      margin: 0.1rem 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .nav button,
+    .secondary {
+      background: #fff;
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    .nav button.active,
+    .primary {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .danger {
+      background: #fff;
+      color: var(--danger);
+      border-color: #f2b8b5;
+    }
+
+    .main {
+      max-width: 1240px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 1rem;
+      align-items: start;
+    }
+
+    .panel,
+    .section-card,
+    .response-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel {
+      position: sticky;
+      top: 92px;
+      padding: 1rem;
+    }
+
+    .progress-text {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .progress-bar {
+      height: 10px;
+      background: var(--soft);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+
+    .progress-bar span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: var(--primary);
+      transition: width 180ms ease;
+    }
+
+    .steps {
+      display: grid;
+      gap: 0.35rem;
+    }
+
+    .step {
+      text-align: left;
+      background: transparent;
+      border-color: transparent;
+      color: var(--muted);
+      min-height: auto;
+      padding: 0.5rem 0.55rem;
+      font-weight: 700;
+    }
+
+    .step.active {
+      background: var(--soft);
+      color: var(--primary-dark);
+      border-color: var(--border);
+    }
+
+    .section-card {
+      padding: clamp(1rem, 2vw, 1.35rem);
+    }
+
+    .section-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.85rem;
+      margin-bottom: 1rem;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      letter-spacing: 0;
+    }
+
+    .section-head span {
+      color: var(--muted);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .field {
+      display: grid;
+      gap: 0.35rem;
+      min-width: 0;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label,
+    .label {
+      font-weight: 750;
+      color: var(--text);
+    }
+
+    .required::after {
+      content: " *";
+      color: var(--danger);
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      padding: 0.7rem 0.75rem;
+      min-height: 42px;
+    }
+
+    textarea {
+      min-height: 104px;
+      resize: vertical;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: 3px solid rgba(31, 111, 139, 0.16);
+      border-color: var(--primary);
+    }
+
+    .choices {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .choice {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      min-height: 42px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.55rem 0.7rem;
+      background: #fff;
+      font-weight: 650;
+    }
+
+    .choice input {
+      width: auto;
+      min-height: auto;
+      accent-color: var(--primary);
+    }
+
+    .ratings {
+      display: grid;
+      gap: 0.85rem;
+    }
+
+    .rating-row {
+      display: grid;
+      grid-template-columns: minmax(160px, 1fr) auto;
+      gap: 1rem;
+      align-items: center;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.65rem;
+    }
+
+    .rating-options {
+      display: flex;
+      gap: 0.35rem;
+    }
+
+    .rating-options input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .rating-options label {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .rating-options input:checked + label {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .form-actions div {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .alert {
+      border-radius: 6px;
+      padding: 0.75rem;
+      border: 1px solid #f4c7c3;
+      background: #fff4f2;
+      color: var(--danger);
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .dashboard {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .kpi {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .kpi strong {
+      display: block;
+      font-size: 1.5rem;
+      color: var(--primary-dark);
+    }
+
+    .kpi span {
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+
+    .filters {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    .response-list {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .response-card {
+      padding: 1rem;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .response-title {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 0.4rem;
+    }
+
+    .response-title strong {
+      font-size: 1.05rem;
+    }
+
+    .meta {
+      display: flex;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      border-radius: 999px;
+      padding: 0.2rem 0.55rem;
+      background: var(--soft);
+      color: var(--text);
+      font-weight: 750;
+      font-size: 0.82rem;
+    }
+
+    .pill.danger { background: #fff4f2; color: var(--danger); border-color: #f4c7c3; }
+    .pill.warning { background: #fff8ea; color: var(--warning); }
+    .pill.success { background: #ecf8f1; color: var(--success); }
+
+    .detail {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .detail-section {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .detail-section h3 {
+      margin: 0 0 0.75rem;
+      font-size: 1.05rem;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.65rem 1rem;
+    }
+
+    .detail-item {
+      border-bottom: 1px solid #eef2f7;
+      padding-bottom: 0.45rem;
+      min-width: 0;
+    }
+
+    .detail-item b {
+      display: block;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .empty {
+      background: #fff;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      text-align: center;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        position: static;
+      }
+
+      .steps {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .kpis,
+      .filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 680px) {
+      .topbar-inner,
+      .response-card,
+      .section-head,
+      .rating-row {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+
+      .nav,
+      .form-actions,
+      .form-actions div {
+        width: 100%;
+      }
+
+      .nav button,
+      .form-actions button {
+        flex: 1 1 auto;
+      }
+
+      .grid,
+      .detail-grid,
+      .kpis,
+      .filters,
+      .steps {
+        grid-template-columns: 1fr;
+      }
+
+      .rating-options {
+        justify-content: space-between;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <h1>Sanitation Supervisor Daily Shift Report</h1>
+          <p>Daily accountability, handoff, MSS, food safety, and leadership tracking</p>
+        </div>
+        <nav class="nav" aria-label="Main navigation">
+          <button id="formTab" class="active" type="button">Daily Form</button>
+          <button id="dashboardTab" type="button">Dashboard</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="main">
+      <section id="formView" class="layout">
+        <aside class="panel">
+          <div class="progress-text">
+            <strong id="progressLabel">Section 1 of 12</strong>
+            <span id="progressPercent">8%</span>
+          </div>
+          <div class="progress-bar" aria-hidden="true"><span id="progressFill"></span></div>
+          <div id="stepList" class="steps"></div>
+        </aside>
+
+        <form id="reportForm" class="section-card" novalidate>
+          <div id="errorBox" class="alert hidden"></div>
+          <div id="sectionContainer"></div>
+          <div class="form-actions">
+            <div>
+              <button id="prevBtn" class="secondary" type="button">Back</button>
+              <button id="nextBtn" class="primary" type="button">Next</button>
+            </div>
+            <div>
+              <button id="draftBtn" class="secondary" type="button">Save Draft</button>
+              <button id="resetBtn" class="danger" type="button">Reset</button>
+              <button id="submitBtn" class="primary hidden" type="submit">Submit Report</button>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <section id="successView" class="hidden">
+        <div class="section-card">
+          <div class="section-head">
+            <div>
+              <h2>Report Submitted</h2>
+              <p id="successMeta"></p>
+            </div>
+            <button class="primary" type="button" id="newReportBtn">Start New Report</button>
+          </div>
+          <div id="successEscalations"></div>
+        </div>
+      </section>
+
+      <section id="dashboardView" class="dashboard hidden">
+        <div class="kpis" id="kpiGrid"></div>
+        <div class="filters">
+          <div class="field">
+            <label for="filterDate">Date</label>
+            <input id="filterDate" type="date" />
+          </div>
+          <div class="field">
+            <label for="filterShift">Shift</label>
+            <select id="filterShift">
+              <option value="">All shifts</option>
+              <option>Day</option>
+              <option>Swing</option>
+              <option>Night</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="filterSupervisor">Supervisor</label>
+            <input id="filterSupervisor" type="search" placeholder="Supervisor" />
+          </div>
+          <div class="field">
+            <label for="filterIssue">Issue Type</label>
+            <select id="filterIssue">
+              <option value="">All reports</option>
+              <option value="safety">Safety issue</option>
+              <option value="food">Food safety issue</option>
+              <option value="pest">Pest activity</option>
+              <option value="mss">MSS issue</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <button id="exportBtn" class="secondary" type="button">Export CSV</button>
+          </div>
+        </div>
+        <div id="responseList" class="response-list"></div>
+      </section>
+
+      <section id="detailView" class="detail hidden"></section>
+    </main>
+  </div>
+
+  <script>
+    const storageKey = "sanitationShiftReports";
+    const draftKey = "sanitationShiftReportDraft";
+
+    const sections = [
+      {
+        title: "Shift Information",
+        fields: [
+          { name: "supervisorName", label: "Supervisor Name", type: "select", required: true, options: ["", "Maria Lopez", "James Carter", "Tonya Reed", "Alex Nguyen", "Other"] },
+          { name: "otherSupervisor", label: "Other Supervisor Name", type: "text", show: d => d.supervisorName === "Other" },
+          { name: "date", label: "Date", type: "date", required: true },
+          { name: "shift", label: "Shift", type: "radio", required: true, options: ["Day", "Swing", "Night"] },
+          { name: "crewSizeScheduled", label: "Crew Size Scheduled", type: "number", required: true },
+          { name: "crewSizePresent", label: "Crew Size Present", type: "number", required: true },
+          { name: "totalLaborHoursWorked", label: "Total Labor Hours Worked", type: "number", required: true }
+        ]
+      },
+      {
+        title: "Safety",
+        fields: [
+          { name: "safetyExpectationsMet", label: "Were all safety expectations met today?", type: "radio", required: true, options: ["Yes", "No"] },
+          { name: "safetyConcernType", label: "Any injuries, near misses, or safety concerns?", type: "radio", required: true, options: ["None", "Near Miss", "First Aid", "Recordable Injury", "Safety Concern"] },
+          { name: "safetyConcernDescription", label: "Describe Safety Concern", type: "textarea", full: true, show: d => d.safetyExpectationsMet === "No" || (d.safetyConcernType && d.safetyConcernType !== "None") },
+          { name: "lotoComplianceVerified", label: "LOTO Compliance Verified?", type: "radio", required: true, options: ["Yes", "No", "N/A"] },
+          { name: "safetyInteractionsCompleted", label: "Number of Safety Interactions Completed", type: "number" },
+          { name: "safetyCorrectiveActions", label: "Any corrective actions required?", type: "textarea", full: true, show: d => d.safetyExpectationsMet === "No" || (d.safetyConcernType && d.safetyConcernType !== "None") }
+        ]
+      },
+      {
+        title: "Sanitation Execution",
+        fields: [
+          { name: "productionCleaningCompleted", label: "Production Cleaning Completed?", type: "radio", required: true, options: ["Yes", "No", "Partially"] },
+          { name: "areasCleanedToday", label: "Areas Cleaned Today", type: "checkbox", full: true, options: ["IQF 1", "IQF 2", "Action Pac", "Oiler", "Infusion", "Swecos", "GP1", "Dryer", "Dicer Room", "Cherry Processing", "Warehouse", "Other"] },
+          { name: "cleaningNotCompleted", label: "Any cleaning not completed?", type: "textarea", full: true, show: d => ["No", "Partially"].includes(d.productionCleaningCompleted) },
+          { name: "whyWorkNotCompleted", label: "Why was work not completed?", type: "textarea", full: true, show: d => ["No", "Partially"].includes(d.productionCleaningCompleted) }
+        ]
+      },
+      {
+        title: "MSS Completion",
+        fields: [
+          { name: "mssTaskCompletedToday", label: "MSS Task Completed Today?", type: "radio", required: true, options: ["Yes", "No"] },
+          { name: "mssTaskDescription", label: "MSS Task Description", type: "textarea", full: true },
+          { name: "mssVerificationCompleted", label: "MSS Verification Completed?", type: "radio", required: true, options: ["Yes", "No"] },
+          { name: "overdueMssItemsIdentified", label: "Any overdue MSS items identified?", type: "radio", required: true, options: ["Yes", "No"] },
+          { name: "mssExplain", label: "Explain", type: "textarea", full: true, show: d => d.overdueMssItemsIdentified === "Yes" || d.mssTaskCompletedToday === "No" || d.mssVerificationCompleted === "No" }
+        ]
+      },
+      {
+        title: "Food Safety",
+        fields: [
+          { name: "foodSafetyConcernsIdentified", label: "Food Safety Concerns Identified?", type: "checkbox", required: true, full: true, options: ["No Issues", "Residue", "Condensation", "Standing Water", "Equipment Damage", "Foreign Material", "Structural Damage", "Pest Activity", "Other"] },
+          { name: "foodSafetyConcernDescription", label: "Describe Concern", type: "textarea", full: true, show: d => hasIssue(d.foodSafetyConcernsIdentified, "No Issues") },
+          { name: "foodSafetyCorrectiveAction", label: "Corrective Action Taken", type: "textarea", full: true, show: d => hasIssue(d.foodSafetyConcernsIdentified, "No Issues") },
+          { name: "qaNotified", label: "QA Notified?", type: "radio", options: ["Yes", "No", "N/A"], show: d => hasIssue(d.foodSafetyConcernsIdentified, "No Issues") }
+        ]
+      },
+      {
+        title: "Pest Control",
+        fields: [
+          { name: "pestActivityObserved", label: "Pest Activity Observed?", type: "radio", required: true, options: ["No", "Rodent", "Insect", "Bird", "Other"] },
+          { name: "pestLocation", label: "Location", type: "textarea", full: true, show: d => d.pestActivityObserved && d.pestActivityObserved !== "No" },
+          { name: "pestContractorNotified", label: "Pest Control Contractor Notified?", type: "radio", options: ["Yes", "No", "N/A"], show: d => d.pestActivityObserved && d.pestActivityObserved !== "No" },
+          { name: "structuralIssuesIdentified", label: "Structural Issues Identified?", type: "checkbox", full: true, options: ["Door Seal", "Dock Door", "Screen", "Wall Penetration", "Roof", "Other"] },
+          { name: "pestWorkOrderSubmitted", label: "Work Order Submitted?", type: "radio", options: ["Yes", "No", "N/A"] }
+        ]
+      },
+      {
+        title: "Facility Condition",
+        fields: [
+          { name: "facilityIssuesFound", label: "Facility Issues Found", type: "checkbox", full: true, options: ["Water Leak", "Air Leak", "Damaged Drain", "Missing Guard", "Damaged Equipment", "Electrical Concern", "Housekeeping", "None"] },
+          { name: "facilityIssueDescription", label: "Describe Issue", type: "textarea", full: true, show: d => hasIssue(d.facilityIssuesFound, "None") },
+          { name: "facilityWorkOrderSubmitted", label: "Work Order Submitted?", type: "radio", options: ["Yes", "No"], show: d => hasIssue(d.facilityIssuesFound, "None") },
+          { name: "facilityWorkOrderNumber", label: "Work Order Number", type: "text", show: d => d.facilityWorkOrderSubmitted === "Yes" }
+        ]
+      },
+      {
+        title: "Leadership & People Development",
+        fields: [
+          { name: "preShiftMeetingConducted", label: "Pre-Shift Meeting Conducted?", type: "radio", required: true, options: ["Yes", "No"] },
+          { name: "employeesCoachedToday", label: "Employees Coached Today", type: "number" },
+          { name: "positiveRecognitionsGiven", label: "Positive Recognitions Given", type: "number" },
+          { name: "employeesNeedingFollowUp", label: "Employees Needing Follow-Up", type: "textarea", full: true },
+          { name: "trainingCompletedToday", label: "Training Completed Today", type: "textarea", full: true },
+          { name: "employeeConcernsRaised", label: "Employee Concerns Raised", type: "textarea", full: true }
+        ]
+      },
+      {
+        title: "Growth & Continuous Improvement",
+        fields: [
+          { name: "improvementOpportunitiesIdentified", label: "Improvement Opportunities Identified?", type: "radio", required: true, options: ["Yes", "No"] },
+          { name: "improvementOpportunityDescription", label: "Describe Opportunity", type: "textarea", full: true, show: d => d.improvementOpportunitiesIdentified === "Yes" },
+          { name: "estimatedBenefit", label: "Estimated Benefit", type: "checkbox", full: true, options: ["Safety", "Food Safety", "Labor Savings", "Chemical Savings", "Water Savings", "Production Support", "Pest Prevention"], show: d => d.improvementOpportunitiesIdentified === "Yes" }
+        ]
+      },
+      {
+        title: "Shift Handoff",
+        fields: [
+          { name: "equipmentNotReadyForProduction", label: "Equipment Not Ready For Production", type: "textarea", full: true },
+          { name: "outstandingWorkOrders", label: "Outstanding Work Orders", type: "textarea", full: true },
+          { name: "openFoodSafetyConcerns", label: "Open Food Safety Concerns", type: "textarea", full: true },
+          { name: "openSanitationConcerns", label: "Open Sanitation Concerns", type: "textarea", full: true },
+          { name: "supportNeededFrom", label: "Support Needed From", type: "checkbox", full: true, options: ["Production", "QA", "Maintenance", "Warehouse", "HR", "Management"] },
+          { name: "supportExplain", label: "Explain", type: "textarea", full: true, show: d => Array.isArray(d.supportNeededFrom) && d.supportNeededFrom.length > 0 }
+        ]
+      },
+      {
+        title: "Daily Scorecard",
+        fields: [
+          { name: "ratings", label: "Rate Today's Shift", type: "ratings", full: true, options: ["Safety", "Food Safety", "Cleaning Execution", "Communication", "Team Performance", "Overall Shift Rating"] }
+        ]
+      },
+      {
+        title: "Photo Uploads",
+        fields: [
+          { name: "photoUploads", label: "Upload Photos", type: "file", full: true, helper: "Examples: Completed MSS, Food Safety Issues, Pest Activity, Equipment Damage, Before/After Cleaning, Safety Concerns" }
+        ]
+      }
+    ];
+
+    let currentSection = 0;
+    let formData = loadDraft();
+
+    const formView = document.getElementById("formView");
+    const dashboardView = document.getElementById("dashboardView");
+    const detailView = document.getElementById("detailView");
+    const successView = document.getElementById("successView");
+    const sectionContainer = document.getElementById("sectionContainer");
+    const errorBox = document.getElementById("errorBox");
+
+    document.getElementById("formTab").addEventListener("click", () => showView("form"));
+    document.getElementById("dashboardTab").addEventListener("click", () => showView("dashboard"));
+    document.getElementById("prevBtn").addEventListener("click", () => changeSection(-1));
+    document.getElementById("nextBtn").addEventListener("click", () => changeSection(1));
+    document.getElementById("draftBtn").addEventListener("click", saveDraft);
+    document.getElementById("resetBtn").addEventListener("click", resetForm);
+    document.getElementById("newReportBtn").addEventListener("click", () => { resetForm(false); showView("form"); });
+    document.getElementById("reportForm").addEventListener("submit", submitReport);
+    document.getElementById("exportBtn").addEventListener("click", exportCsv);
+    ["filterDate", "filterShift", "filterSupervisor", "filterIssue"].forEach(id => document.getElementById(id).addEventListener("input", renderDashboard));
+
+    renderSteps();
+    renderSection();
+    renderDashboard();
+
+    function hasIssue(value, noneLabel) {
+      return Array.isArray(value) && value.length > 0 && !value.includes(noneLabel);
+    }
+
+    function showView(view) {
+      formView.classList.toggle("hidden", view !== "form");
+      dashboardView.classList.toggle("hidden", view !== "dashboard");
+      detailView.classList.add("hidden");
+      successView.classList.toggle("hidden", view !== "success");
+      document.getElementById("formTab").classList.toggle("active", view === "form");
+      document.getElementById("dashboardTab").classList.toggle("active", view === "dashboard");
+      if (view === "dashboard") renderDashboard();
+    }
+
+    function renderSteps() {
+      const stepList = document.getElementById("stepList");
+      stepList.innerHTML = sections.map((section, index) => `<button type="button" class="step" data-index="${index}">${index + 1}. ${section.title}</button>`).join("");
+      stepList.querySelectorAll("button").forEach(button => {
+        button.addEventListener("click", () => {
+          persistVisibleFields();
+          currentSection = Number(button.dataset.index);
+          renderSection();
+        });
+      });
+    }
+
+    function renderSection() {
+      const section = sections[currentSection];
+      const visibleFields = section.fields.filter(field => !field.show || field.show(formData));
+      errorBox.classList.add("hidden");
+      sectionContainer.innerHTML = `
+        <div class="section-head">
+          <div>
+            <h2>${section.title}</h2>
+          </div>
+          <span>Section ${currentSection + 1} of ${sections.length}</span>
+        </div>
+        <div class="grid">
+          ${visibleFields.map(renderField).join("")}
+        </div>
+      `;
+
+      hydrateFields(visibleFields);
+      bindFieldEvents(visibleFields);
+      updateNav();
+    }
+
+    function renderField(field) {
+      const required = field.required ? " required" : "";
+      const full = field.full ? " full" : "";
+      const helper = field.helper ? `<small>${field.helper}</small>` : "";
+      if (field.type === "radio" || field.type === "checkbox") {
+        const type = field.type;
+        return `
+          <div class="field${full}">
+            <div class="label${required}">${field.label}</div>
+            <div class="choices">
+              ${field.options.map(option => `
+                <label class="choice">
+                  <input type="${type}" name="${field.name}" value="${option}" ${field.required ? "data-required='true'" : ""}>
+                  <span>${option}</span>
+                </label>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      if (field.type === "textarea") {
+        return `
+          <div class="field${full}">
+            <label class="${required}" for="${field.name}">${field.label}</label>
+            <textarea id="${field.name}" name="${field.name}"></textarea>
+          </div>
+        `;
+      }
+
+      if (field.type === "select") {
+        return `
+          <div class="field${full}">
+            <label class="${required}" for="${field.name}">${field.label}</label>
+            <select id="${field.name}" name="${field.name}" ${field.required ? "data-required='true'" : ""}>
+              ${field.options.map(option => `<option value="${option}">${option || "Select"}</option>`).join("")}
+            </select>
+          </div>
+        `;
+      }
+
+      if (field.type === "ratings") {
+        return `
+          <div class="field full">
+            <div class="label">${field.label}</div>
+            <div class="ratings">
+              ${field.options.map(item => `
+                <div class="rating-row">
+                  <strong>${item}</strong>
+                  <div class="rating-options">
+                    ${[1, 2, 3, 4, 5].map(score => {
+                      const name = ratingKey(item);
+                      return `<input id="${name}-${score}" type="radio" name="${name}" value="${score}"><label for="${name}-${score}">${score}</label>`;
+                    }).join("")}
+                  </div>
+                </div>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      if (field.type === "file") {
+        return `
+          <div class="field${full}">
+            <label for="${field.name}">${field.label}</label>
+            <input id="${field.name}" name="${field.name}" type="file" accept="image/*" multiple>
+            ${helper}
+          </div>
+        `;
+      }
+
+      return `
+        <div class="field${full}">
+          <label class="${required}" for="${field.name}">${field.label}</label>
+          <input id="${field.name}" name="${field.name}" type="${field.type}" ${field.required ? "data-required='true'" : ""}>
+        </div>
+      `;
+    }
+
+    function hydrateFields(fields) {
+      fields.forEach(field => {
+        if (field.type === "radio") {
+          document.querySelectorAll(`[name="${field.name}"]`).forEach(input => input.checked = formData[field.name] === input.value);
+        } else if (field.type === "checkbox") {
+          document.querySelectorAll(`[name="${field.name}"]`).forEach(input => input.checked = Array.isArray(formData[field.name]) && formData[field.name].includes(input.value));
+        } else if (field.type === "ratings") {
+          field.options.forEach(item => {
+            const key = ratingKey(item);
+            document.querySelectorAll(`[name="${key}"]`).forEach(input => input.checked = String(formData[key] || "") === input.value);
+          });
+        } else if (field.type !== "file") {
+          const input = document.querySelector(`[name="${field.name}"]`);
+          if (input) input.value = formData[field.name] || "";
+        }
+      });
+    }
+
+    function bindFieldEvents(fields) {
+      fields.forEach(field => {
+        if (field.type === "file") {
+          const input = document.querySelector(`[name="${field.name}"]`);
+          input.addEventListener("change", () => {
+            formData[field.name] = Array.from(input.files || []).map(file => file.name);
+          });
+          return;
+        }
+        const inputs = field.type === "ratings"
+          ? field.options.flatMap(item => Array.from(document.querySelectorAll(`[name="${ratingKey(item)}"]`)))
+          : Array.from(document.querySelectorAll(`[name="${field.name}"]`));
+        inputs.forEach(input => input.addEventListener("input", () => {
+          persistVisibleFields();
+          renderSection();
+        }));
+      });
+    }
+
+    function persistVisibleFields() {
+      const section = sections[currentSection];
+      section.fields.forEach(field => {
+        if (field.show && !field.show(formData)) return;
+        if (field.type === "radio") {
+          const checked = document.querySelector(`[name="${field.name}"]:checked`);
+          formData[field.name] = checked ? checked.value : "";
+        } else if (field.type === "checkbox") {
+          formData[field.name] = Array.from(document.querySelectorAll(`[name="${field.name}"]:checked`)).map(input => input.value);
+        } else if (field.type === "ratings") {
+          field.options.forEach(item => {
+            const key = ratingKey(item);
+            const checked = document.querySelector(`[name="${key}"]:checked`);
+            formData[key] = checked ? checked.value : "";
+          });
+        } else if (field.type !== "file") {
+          const input = document.querySelector(`[name="${field.name}"]`);
+          if (input) formData[field.name] = input.value;
+        }
+      });
+    }
+
+    function changeSection(direction) {
+      persistVisibleFields();
+      if (direction > 0 && !validateSection()) return;
+      currentSection = Math.max(0, Math.min(sections.length - 1, currentSection + direction));
+      renderSection();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function validateSection() {
+      const missing = sections[currentSection].fields
+        .filter(field => field.required && (!field.show || field.show(formData)))
+        .filter(field => {
+          const value = formData[field.name];
+          return Array.isArray(value) ? value.length === 0 : !value;
+        });
+      if (missing.length) {
+        errorBox.textContent = `Please complete: ${missing.map(field => field.label).join(", ")}`;
+        errorBox.classList.remove("hidden");
+        return false;
+      }
+      errorBox.classList.add("hidden");
+      return true;
+    }
+
+    function updateNav() {
+      const percent = Math.round(((currentSection + 1) / sections.length) * 100);
+      document.getElementById("progressLabel").textContent = `Section ${currentSection + 1} of ${sections.length}`;
+      document.getElementById("progressPercent").textContent = `${percent}%`;
+      document.getElementById("progressFill").style.width = `${percent}%`;
+      document.getElementById("prevBtn").disabled = currentSection === 0;
+      document.getElementById("nextBtn").classList.toggle("hidden", currentSection === sections.length - 1);
+      document.getElementById("submitBtn").classList.toggle("hidden", currentSection !== sections.length - 1);
+      document.querySelectorAll(".step").forEach((step, index) => step.classList.toggle("active", index === currentSection));
+    }
+
+    function saveDraft() {
+      persistVisibleFields();
+      localStorage.setItem(draftKey, JSON.stringify(formData));
+      alert("Draft saved on this device.");
+    }
+
+    function loadDraft() {
+      const draft = localStorage.getItem(draftKey);
+      if (draft) return JSON.parse(draft);
+      return { date: new Date().toISOString().slice(0, 10), foodSafetyConcernsIdentified: [], facilityIssuesFound: [], areasCleanedToday: [], structuralIssuesIdentified: [], supportNeededFrom: [], estimatedBenefit: [] };
+    }
+
+    function resetForm(confirmReset = true) {
+      if (confirmReset && !confirm("Reset the current report?")) return;
+      formData = { date: new Date().toISOString().slice(0, 10), foodSafetyConcernsIdentified: [], facilityIssuesFound: [], areasCleanedToday: [], structuralIssuesIdentified: [], supportNeededFrom: [], estimatedBenefit: [] };
+      localStorage.removeItem(draftKey);
+      currentSection = 0;
+      renderSection();
+    }
+
+    function submitReport(event) {
+      event.preventDefault();
+      persistVisibleFields();
+      const missing = [];
+      sections.forEach(section => section.fields.forEach(field => {
+        if (!field.required || (field.show && !field.show(formData))) return;
+        const value = formData[field.name];
+        if (Array.isArray(value) ? value.length === 0 : !value) missing.push(field.label);
+      }));
+      if (missing.length) {
+        errorBox.textContent = `Please complete required fields before submitting: ${missing.join(", ")}`;
+        errorBox.classList.remove("hidden");
+        return;
+      }
+
+      const reports = getReports();
+      const report = { ...formData, id: crypto.randomUUID(), submittedAt: new Date().toISOString(), escalations: getEscalations(formData) };
+      reports.unshift(report);
+      localStorage.setItem(storageKey, JSON.stringify(reports));
+      localStorage.removeItem(draftKey);
+      renderSuccess(report);
+      showView("success");
+      renderDashboard();
+    }
+
+    function renderSuccess(report) {
+      document.getElementById("successMeta").textContent = `${displaySupervisor(report)} | ${report.date || "No date"} | ${report.shift || "No shift"}`;
+      const escalations = report.escalations;
+      document.getElementById("successEscalations").innerHTML = escalations.length
+        ? `<h3>Escalations</h3><div class="meta">${escalations.map(item => `<span class="pill danger">${item}</span>`).join("")}</div>`
+        : `<div class="empty">No escalations flagged on this report.</div>`;
+    }
+
+    function getReports() {
+      const raw = localStorage.getItem(storageKey);
+      return raw ? JSON.parse(raw) : sampleReports();
+    }
+
+    function saveReports(reports) {
+      localStorage.setItem(storageKey, JSON.stringify(reports));
+    }
+
+    function sampleReports() {
+      return [
+        {
+          id: "sample-1",
+          submittedAt: new Date().toISOString(),
+          supervisorName: "Maria Lopez",
+          date: new Date().toISOString().slice(0, 10),
+          shift: "Night",
+          crewSizeScheduled: "8",
+          crewSizePresent: "7",
+          totalLaborHoursWorked: "66",
+          safetyExpectationsMet: "Yes",
+          safetyConcernType: "None",
+          lotoComplianceVerified: "Yes",
+          safetyInteractionsCompleted: "3",
+          productionCleaningCompleted: "Partially",
+          cleaningNotCompleted: "Dryer exterior detail pending.",
+          mssTaskCompletedToday: "Yes",
+          mssVerificationCompleted: "Yes",
+          overdueMssItemsIdentified: "No",
+          foodSafetyConcernsIdentified: ["Condensation"],
+          foodSafetyConcernDescription: "Condensation observed above GP1 staging area.",
+          foodSafetyCorrectiveAction: "Area isolated and QA notified.",
+          qaNotified: "Yes",
+          pestActivityObserved: "No",
+          facilityIssuesFound: ["Water Leak"],
+          facilityWorkOrderSubmitted: "Yes",
+          facilityWorkOrderNumber: "WO-10428",
+          employeesCoachedToday: "4",
+          positiveRecognitionsGiven: "2",
+          improvementOpportunitiesIdentified: "Yes",
+          estimatedBenefit: ["Water Savings", "Labor Savings"],
+          safetyRating: "5",
+          foodSafetyRating: "4",
+          cleaningExecutionRating: "3",
+          communicationRating: "4",
+          teamPerformanceRating: "4",
+          overallShiftRating: "4"
+        }
+      ].map(report => ({ ...report, escalations: getEscalations(report) }));
+    }
+
+    function renderDashboard() {
+      const reports = filteredReports();
+      renderKpis(reports);
+      const list = document.getElementById("responseList");
+      if (!reports.length) {
+        list.innerHTML = `<div class="empty">No reports match the current filters.</div>`;
+        return;
+      }
+      list.innerHTML = reports.map(report => `
+        <article class="response-card">
+          <div>
+            <div class="response-title">
+              <strong>${displaySupervisor(report)}</strong>
+              <span class="pill">${report.date || ""}</span>
+              <span class="pill">${report.shift || ""}</span>
+              ${report.escalations && report.escalations.length ? `<span class="pill danger">${report.escalations.length} escalation${report.escalations.length > 1 ? "s" : ""}</span>` : `<span class="pill success">No escalations</span>`}
+            </div>
+            <div class="meta">
+              <span class="pill">Overall ${report.overallShiftRating || "N/A"}</span>
+              <span class="pill">MSS ${report.mssTaskCompletedToday || "N/A"}</span>
+              <span class="pill">Safety ${report.safetyExpectationsMet || "N/A"}</span>
+              <span class="pill">Food Safety ${foodStatus(report)}</span>
+            </div>
+          </div>
+          <button class="secondary" type="button" onclick="showDetail('${report.id}')">View</button>
+        </article>
+      `).join("");
+    }
+
+    function filteredReports() {
+      const reports = getReports();
+      const date = document.getElementById("filterDate").value;
+      const shift = document.getElementById("filterShift").value;
+      const supervisor = document.getElementById("filterSupervisor").value.toLowerCase();
+      const issue = document.getElementById("filterIssue").value;
+      return reports.filter(report => {
+        if (date && report.date !== date) return false;
+        if (shift && report.shift !== shift) return false;
+        if (supervisor && !displaySupervisor(report).toLowerCase().includes(supervisor)) return false;
+        if (issue === "safety" && !(report.safetyExpectationsMet === "No" || report.safetyConcernType !== "None")) return false;
+        if (issue === "food" && !hasIssue(report.foodSafetyConcernsIdentified, "No Issues")) return false;
+        if (issue === "pest" && !(report.pestActivityObserved && report.pestActivityObserved !== "No")) return false;
+        if (issue === "mss" && !(report.mssTaskCompletedToday === "No" || report.mssVerificationCompleted === "No" || report.overdueMssItemsIdentified === "Yes")) return false;
+        return true;
+      });
+    }
+
+    function renderKpis(reports) {
+      const count = reports.length || 1;
+      const safetyCompliance = Math.round((reports.filter(r => r.safetyExpectationsMet === "Yes" && r.safetyConcernType === "None").length / count) * 100);
+      const mssCompletion = Math.round((reports.filter(r => r.mssTaskCompletedToday === "Yes").length / count) * 100);
+      const foodIssues = reports.filter(r => hasIssue(r.foodSafetyConcernsIdentified, "No Issues")).length;
+      const workOrders = reports.filter(r => r.facilityWorkOrderSubmitted === "Yes" || r.pestWorkOrderSubmitted === "Yes").length;
+      const coaching = reports.reduce((sum, r) => sum + Number(r.employeesCoachedToday || 0), 0);
+      const avgRating = average(reports.map(r => Number(r.overallShiftRating || 0)).filter(Boolean));
+      const pestFindings = reports.filter(r => r.pestActivityObserved && r.pestActivityObserved !== "No").length;
+      const labor = reports.reduce((sum, r) => sum + Number(r.totalLaborHoursWorked || 0), 0);
+      const items = [
+        ["Safety Compliance", `${safetyCompliance}%`],
+        ["MSS Completion", `${mssCompletion}%`],
+        ["Food Safety Issues", foodIssues],
+        ["Work Orders Submitted", workOrders],
+        ["Coaching Interactions", coaching],
+        ["Average Overall Rating", avgRating || "N/A"],
+        ["Pest Findings", pestFindings],
+        ["Labor Hours", labor]
+      ];
+      document.getElementById("kpiGrid").innerHTML = items.map(([label, value]) => `<div class="kpi"><strong>${value}</strong><span>${label}</span></div>`).join("");
+    }
+
+    function showDetail(id) {
+      const report = getReports().find(item => item.id === id);
+      if (!report) return;
+      showView("detail");
+      formView.classList.add("hidden");
+      dashboardView.classList.add("hidden");
+      successView.classList.add("hidden");
+      detailView.classList.remove("hidden");
+      document.getElementById("dashboardTab").classList.add("active");
+      const escalationHtml = report.escalations && report.escalations.length
+        ? `<div class="meta">${report.escalations.map(item => `<span class="pill danger">${item}</span>`).join("")}</div>`
+        : `<span class="pill success">No escalations</span>`;
+      detailView.innerHTML = `
+        <div class="section-card">
+          <div class="section-head">
+            <div>
+              <h2>${displaySupervisor(report)} | ${report.date || ""} | ${report.shift || ""}</h2>
+              ${escalationHtml}
+            </div>
+            <button class="secondary" type="button" onclick="showView('dashboard')">Back to Dashboard</button>
+          </div>
+        </div>
+        ${sections.map(section => renderDetailSection(section, report)).join("")}
+      `;
+    }
+
+    function renderDetailSection(section, report) {
+      const items = [];
+      section.fields.forEach(field => {
+        if (field.type === "ratings") {
+          field.options.forEach(item => items.push([item, report[ratingKey(item)]]));
+        } else if (field.type === "file") {
+          items.push([field.label, listValue(report[field.name])]);
+        } else {
+          items.push([field.label, listValue(report[field.name])]);
+        }
+      });
+      return `
+        <div class="detail-section">
+          <h3>${section.title}</h3>
+          <div class="detail-grid">
+            ${items.map(([label, value]) => `<div class="detail-item"><b>${label}</b><span>${value || "N/A"}</span></div>`).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    function exportCsv() {
+      const reports = filteredReports();
+      const keys = Array.from(new Set(reports.flatMap(report => Object.keys(report)))).filter(key => key !== "id");
+      const rows = [keys.join(","), ...reports.map(report => keys.map(key => csvCell(listValue(report[key]))).join(","))];
+      const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `sanitation-shift-reports-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function csvCell(value) {
+      return `"${String(value || "").replace(/"/g, '""')}"`;
+    }
+
+    function average(values) {
+      if (!values.length) return "";
+      return (values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(1);
+    }
+
+    function getEscalations(report) {
+      const escalations = [];
+      if (report.safetyExpectationsMet === "No" || (report.safetyConcernType && report.safetyConcernType !== "None")) escalations.push("Safety issue");
+      if (hasIssue(report.foodSafetyConcernsIdentified, "No Issues")) escalations.push("Food safety concern");
+      if (hasIssue(report.foodSafetyConcernsIdentified, "No Issues") && report.qaNotified === "No") escalations.push("QA not notified");
+      if (report.pestActivityObserved && report.pestActivityObserved !== "No") escalations.push("Pest activity");
+      if (["No", "Partially"].includes(report.productionCleaningCompleted)) escalations.push("Incomplete cleaning");
+      if (report.mssTaskCompletedToday === "No" || report.mssVerificationCompleted === "No" || report.overdueMssItemsIdentified === "Yes") escalations.push("MSS issue");
+      if (hasIssue(report.facilityIssuesFound, "None") && report.facilityWorkOrderSubmitted === "No") escalations.push("Facility issue without work order");
+      return escalations;
+    }
+
+    function foodStatus(report) {
+      return hasIssue(report.foodSafetyConcernsIdentified, "No Issues") ? "Issue" : "No Issues";
+    }
+
+    function displaySupervisor(report) {
+      return report.supervisorName === "Other" ? report.otherSupervisor || "Other" : report.supervisorName || "Unknown";
+    }
+
+    function listValue(value) {
+      return Array.isArray(value) ? value.join("; ") : value;
+    }
+
+    function ratingKey(label) {
+      const base = label.replace(/[^a-z0-9]+(.)/gi, (_, chr) => chr.toUpperCase()).replace(/[^a-z0-9]/gi, "").replace(/^./, chr => chr.toLowerCase());
+      return base.endsWith("Rating") ? base : `${base}Rating`;
+    }
+  </script>
+</body>
+</html>
