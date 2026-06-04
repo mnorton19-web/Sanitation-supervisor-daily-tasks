@@ -492,6 +492,73 @@
       font-weight: 700;
     }
 
+    .settings-grid,
+    .trend-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .mini-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .mini-table th,
+    .mini-table td {
+      border-bottom: 1px solid var(--border);
+      padding: 0.55rem;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .mini-table th {
+      background: var(--soft);
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .mini-table tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .repeater {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .repeater-item {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem;
+      background: #fff;
+      display: grid;
+      gap: 0.65rem;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .summary-box {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      padding: 1rem;
+    }
+
+    .summary-box h3 {
+      margin: 0 0 0.5rem;
+      font-size: 1rem;
+    }
+
     @media (max-width: 980px) {
       .layout {
         grid-template-columns: 1fr;
@@ -535,6 +602,9 @@
       .detail-grid,
       .kpis,
       .filters,
+      .settings-grid,
+      .trend-grid,
+      .summary-grid,
       .steps {
         grid-template-columns: 1fr;
       }
@@ -556,6 +626,7 @@
         <nav class="nav" aria-label="Main navigation">
           <button id="formTab" class="active" type="button">Daily Form</button>
           <button id="dashboardTab" type="button">Dashboard</button>
+          <button id="settingsTab" type="button">Settings</button>
         </nav>
       </div>
     </header>
@@ -564,7 +635,7 @@
       <section id="formView" class="layout">
         <aside class="panel">
           <div class="progress-text">
-            <strong id="progressLabel">Section 1 of 12</strong>
+            <strong id="progressLabel">Section 1</strong>
             <span id="progressPercent">8%</span>
           </div>
           <div class="progress-bar" aria-hidden="true"><span id="progressFill"></span></div>
@@ -580,6 +651,7 @@
               <button id="nextBtn" class="primary" type="button">Next</button>
             </div>
             <div>
+              <button id="copyPreviousBtn" class="secondary" type="button">Copy Previous Shift</button>
               <button id="draftBtn" class="secondary" type="button">Save Draft</button>
               <button id="resetBtn" class="danger" type="button">Reset</button>
               <button id="submitBtn" class="primary hidden" type="submit">Submit Report</button>
@@ -639,6 +711,53 @@
         <div id="responseList" class="response-list"></div>
       </section>
 
+      <section id="settingsView" class="hidden">
+        <div class="section-card">
+          <div class="section-head">
+            <div>
+              <h2>Settings</h2>
+              <p>Update the lists used by the daily form.</p>
+            </div>
+          </div>
+          <div class="settings-grid">
+            <div class="field">
+              <label for="settingsSupervisors">Supervisor Names</label>
+              <textarea id="settingsSupervisors" placeholder="One name per line"></textarea>
+            </div>
+            <div class="field">
+              <label for="settingsAreas">Sanitation Areas</label>
+              <textarea id="settingsAreas" placeholder="One area per line"></textarea>
+            </div>
+            <div class="field">
+              <label for="settingsShifts">Shifts</label>
+              <textarea id="settingsShifts" placeholder="One shift per line"></textarea>
+            </div>
+            <div class="field">
+              <label for="settingsDepartments">Support Departments</label>
+              <textarea id="settingsDepartments" placeholder="One department per line"></textarea>
+            </div>
+            <div class="field">
+              <label for="settingsIssueTypes">Common Issue Types</label>
+              <textarea id="settingsIssueTypes" placeholder="One issue type per line"></textarea>
+            </div>
+            <div class="field">
+              <label for="settingsMssTasks">Default MSS Tasks</label>
+              <textarea id="settingsMssTasks" placeholder="One MSS task per line"></textarea>
+            </div>
+            <div class="field">
+              <label for="settingsDeepCleanTypes">Deep Cleaning Types</label>
+              <textarea id="settingsDeepCleanTypes" placeholder="One deep cleaning type per line"></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <div>
+              <button id="saveSettingsBtn" class="primary" type="button">Save Settings</button>
+              <button id="resetSettingsBtn" class="secondary" type="button">Restore Defaults</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section id="detailView" class="detail hidden"></section>
     </main>
   </div>
@@ -646,15 +765,26 @@
   <script>
     const storageKey = "sanitationShiftReports";
     const draftKey = "sanitationShiftReportDraft";
+    const settingsKey = "sanitationShiftReportSettings";
+    const defaultSettings = {
+      supervisors: ["Maria Lopez", "James Carter", "Tonya Reed", "Alex Nguyen"],
+      areas: ["IQF 1", "IQF 2", "Action Pac", "Oiler", "Infusion", "Swecos", "GP1", "Dryer", "Dicer Room", "Cherry Processing", "Warehouse", "Other"],
+      shifts: ["Day", "Swing", "Night"],
+      departments: ["Production", "QA", "Maintenance", "Warehouse", "HR", "Management"],
+      issueTypes: ["Safety", "Food Safety", "Sanitation", "Pest", "Facility", "Equipment", "MSS", "People", "Other"],
+      mssTasks: ["Master cleaning task", "MSS verification", "Overdue MSS follow-up", "Documentation review"],
+      deepCleanTypes: ["Foam cleaning", "Detail cleaning", "Tear-down cleaning", "Overhead cleaning", "Drain cleaning", "Floor/wall deep clean", "Equipment deep clean", "Allergen clean", "Other"]
+    };
+    let appSettings = loadSettings();
 
     const sections = [
       {
         title: "Shift Information",
         fields: [
-          { name: "supervisorName", label: "Supervisor Name", type: "select", required: true, options: ["", "Maria Lopez", "James Carter", "Tonya Reed", "Alex Nguyen", "Other"] },
+          { name: "supervisorName", label: "Supervisor Name", type: "select", required: true, options: () => ["", ...appSettings.supervisors, "Other"] },
           { name: "otherSupervisor", label: "Other Supervisor Name", type: "text", show: d => d.supervisorName === "Other" },
           { name: "date", label: "Date", type: "date", required: true },
-          { name: "shift", label: "Shift", type: "radio", required: true, options: ["Day", "Swing", "Night"] },
+          { name: "shift", label: "Shift", type: "radio", required: true, options: () => appSettings.shifts },
           { name: "crewSizeScheduled", label: "Crew Size Scheduled", type: "number", required: true },
           { name: "crewSizePresent", label: "Crew Size Present", type: "number", required: true },
           { name: "totalLaborHoursWorked", label: "Total Labor Hours Worked", type: "number", required: true }
@@ -675,35 +805,46 @@
         title: "Sanitation Execution",
         fields: [
           { name: "productionCleaningCompleted", label: "Production Cleaning Completed?", type: "radio", required: true, options: ["Yes", "No", "Partially"] },
-          { name: "areasCleanedToday", label: "Areas Cleaned Today", type: "checkbox", full: true, options: ["IQF 1", "IQF 2", "Action Pac", "Oiler", "Infusion", "Swecos", "GP1", "Dryer", "Dicer Room", "Cherry Processing", "Warehouse", "Other"] },
-          { name: "cleaningNotCompleted", label: "Any cleaning not completed?", type: "textarea", full: true, show: d => ["No", "Partially"].includes(d.productionCleaningCompleted) },
-          { name: "whyWorkNotCompleted", label: "Why was work not completed?", type: "textarea", full: true, show: d => ["No", "Partially"].includes(d.productionCleaningCompleted) }
+          { name: "areaStatus", label: "Area Status View", type: "areaStatus", full: true },
+          { name: "cleaningNotCompleted", label: "Any cleaning not completed?", type: "textarea", full: true, requiredWhen: d => ["No", "Partially"].includes(d.productionCleaningCompleted), show: d => ["No", "Partially"].includes(d.productionCleaningCompleted) },
+          { name: "whyWorkNotCompleted", label: "Why was work not completed?", type: "textarea", full: true, requiredWhen: d => ["No", "Partially"].includes(d.productionCleaningCompleted), show: d => ["No", "Partially"].includes(d.productionCleaningCompleted) }
+        ]
+      },
+      {
+        title: "Deep Cleaning & Time Tracking",
+        fields: [
+          { name: "deepCleaningPerformed", label: "Deep Cleaning Performed?", type: "radio", required: true, options: ["Yes", "No"] },
+          { name: "deepCleaningTypes", label: "Deep Cleaning Type", type: "checkbox", full: true, options: () => appSettings.deepCleanTypes, show: d => d.deepCleaningPerformed === "Yes" },
+          { name: "deepCleaningAreas", label: "Deep Cleaning Areas", type: "checkbox", full: true, options: () => appSettings.areas, requiredWhen: d => d.deepCleaningPerformed === "Yes", show: d => d.deepCleaningPerformed === "Yes" },
+          { name: "deepCleaningDescription", label: "Deep Cleaning Description", type: "textarea", full: true, requiredWhen: d => d.deepCleaningPerformed === "Yes", show: d => d.deepCleaningPerformed === "Yes" },
+          { name: "deepCleaningVerified", label: "Deep Cleaning Verified?", type: "radio", options: ["Yes", "No", "N/A"], requiredWhen: d => d.deepCleaningPerformed === "Yes", show: d => d.deepCleaningPerformed === "Yes" },
+          { name: "cleaningTimeEntries", label: "Cleaning Time Tracking", type: "cleaningTime", full: true }
         ]
       },
       {
         title: "MSS Completion",
         fields: [
           { name: "mssTaskCompletedToday", label: "MSS Task Completed Today?", type: "radio", required: true, options: ["Yes", "No"] },
-          { name: "mssTaskDescription", label: "MSS Task Description", type: "textarea", full: true },
+          { name: "mssTaskDescription", label: "MSS Task Description", type: "selectText", full: true, options: () => appSettings.mssTasks },
           { name: "mssVerificationCompleted", label: "MSS Verification Completed?", type: "radio", required: true, options: ["Yes", "No"] },
           { name: "overdueMssItemsIdentified", label: "Any overdue MSS items identified?", type: "radio", required: true, options: ["Yes", "No"] },
-          { name: "mssExplain", label: "Explain", type: "textarea", full: true, show: d => d.overdueMssItemsIdentified === "Yes" || d.mssTaskCompletedToday === "No" || d.mssVerificationCompleted === "No" }
+          { name: "mssExplain", label: "Explain", type: "textarea", full: true, requiredWhen: d => d.overdueMssItemsIdentified === "Yes" || d.mssTaskCompletedToday === "No" || d.mssVerificationCompleted === "No", show: d => d.overdueMssItemsIdentified === "Yes" || d.mssTaskCompletedToday === "No" || d.mssVerificationCompleted === "No" }
         ]
       },
       {
         title: "Food Safety",
         fields: [
           { name: "foodSafetyConcernsIdentified", label: "Food Safety Concerns Identified?", type: "checkbox", required: true, full: true, options: ["No Issues", "Residue", "Condensation", "Standing Water", "Equipment Damage", "Foreign Material", "Structural Damage", "Pest Activity", "Other"] },
-          { name: "foodSafetyConcernDescription", label: "Describe Concern", type: "textarea", full: true, show: d => hasIssue(d.foodSafetyConcernsIdentified, "No Issues") },
-          { name: "foodSafetyCorrectiveAction", label: "Corrective Action Taken", type: "textarea", full: true, show: d => hasIssue(d.foodSafetyConcernsIdentified, "No Issues") },
-          { name: "qaNotified", label: "QA Notified?", type: "radio", options: ["Yes", "No", "N/A"], show: d => hasIssue(d.foodSafetyConcernsIdentified, "No Issues") }
+          { name: "foodSafetyConcernDescription", label: "Describe Concern", type: "textarea", full: true, requiredWhen: d => hasIssue(d.foodSafetyConcernsIdentified, "No Issues"), show: d => hasIssue(d.foodSafetyConcernsIdentified, "No Issues") },
+          { name: "foodSafetyCorrectiveAction", label: "Corrective Action Taken", type: "textarea", full: true, requiredWhen: d => hasIssue(d.foodSafetyConcernsIdentified, "No Issues"), show: d => hasIssue(d.foodSafetyConcernsIdentified, "No Issues") },
+          { name: "qaNotified", label: "QA Notified?", type: "radio", requiredWhen: d => hasIssue(d.foodSafetyConcernsIdentified, "No Issues"), options: ["Yes", "No", "N/A"], show: d => hasIssue(d.foodSafetyConcernsIdentified, "No Issues") }
         ]
       },
       {
         title: "Pest Control",
         fields: [
           { name: "pestActivityObserved", label: "Pest Activity Observed?", type: "radio", required: true, options: ["No", "Rodent", "Insect", "Bird", "Other"] },
-          { name: "pestLocation", label: "Location", type: "textarea", full: true, show: d => d.pestActivityObserved && d.pestActivityObserved !== "No" },
+          { name: "pestLocation", label: "Location", type: "textarea", full: true, requiredWhen: d => d.pestActivityObserved && d.pestActivityObserved !== "No", show: d => d.pestActivityObserved && d.pestActivityObserved !== "No" },
           { name: "pestContractorNotified", label: "Pest Control Contractor Notified?", type: "radio", options: ["Yes", "No", "N/A"], show: d => d.pestActivityObserved && d.pestActivityObserved !== "No" },
           { name: "structuralIssuesIdentified", label: "Structural Issues Identified?", type: "checkbox", full: true, options: ["Door Seal", "Dock Door", "Screen", "Wall Penetration", "Roof", "Other"] },
           { name: "pestWorkOrderSubmitted", label: "Work Order Submitted?", type: "radio", options: ["Yes", "No", "N/A"] }
@@ -715,7 +856,7 @@
           { name: "facilityIssuesFound", label: "Facility Issues Found", type: "checkbox", full: true, options: ["Water Leak", "Air Leak", "Damaged Drain", "Missing Guard", "Damaged Equipment", "Electrical Concern", "Housekeeping", "None"] },
           { name: "facilityIssueDescription", label: "Describe Issue", type: "textarea", full: true, show: d => hasIssue(d.facilityIssuesFound, "None") },
           { name: "facilityWorkOrderSubmitted", label: "Work Order Submitted?", type: "radio", options: ["Yes", "No"], show: d => hasIssue(d.facilityIssuesFound, "None") },
-          { name: "facilityWorkOrderNumber", label: "Work Order Number", type: "text", show: d => d.facilityWorkOrderSubmitted === "Yes" }
+          { name: "facilityWorkOrderNumber", label: "Work Order Number", type: "text", requiredWhen: d => d.facilityWorkOrderSubmitted === "Yes", show: d => d.facilityWorkOrderSubmitted === "Yes" }
         ]
       },
       {
@@ -744,8 +885,14 @@
           { name: "outstandingWorkOrders", label: "Outstanding Work Orders", type: "textarea", full: true },
           { name: "openFoodSafetyConcerns", label: "Open Food Safety Concerns", type: "textarea", full: true },
           { name: "openSanitationConcerns", label: "Open Sanitation Concerns", type: "textarea", full: true },
-          { name: "supportNeededFrom", label: "Support Needed From", type: "checkbox", full: true, options: ["Production", "QA", "Maintenance", "Warehouse", "HR", "Management"] },
+          { name: "supportNeededFrom", label: "Support Needed From", type: "checkbox", full: true, options: () => appSettings.departments },
           { name: "supportExplain", label: "Explain", type: "textarea", full: true, show: d => Array.isArray(d.supportNeededFrom) && d.supportNeededFrom.length > 0 }
+        ]
+      },
+      {
+        title: "Work Orders",
+        fields: [
+          { name: "workOrders", label: "Repeatable Work Orders", type: "workOrders", full: true }
         ]
       },
       {
@@ -757,7 +904,7 @@
       {
         title: "Photo Uploads",
         fields: [
-          { name: "photoUploads", label: "Upload Photos", type: "file", full: true, helper: "Examples: Completed MSS, Food Safety Issues, Pest Activity, Equipment Damage, Before/After Cleaning, Safety Concerns" }
+          { name: "photoUploads", label: "Upload Photos", type: "photoUploads", full: true, helper: "Label each photo by category: Completed MSS, Food Safety Issues, Pest Activity, Equipment Damage, Before/After Cleaning, Safety Concerns" }
         ]
       }
     ];
@@ -767,6 +914,7 @@
 
     const formView = document.getElementById("formView");
     const dashboardView = document.getElementById("dashboardView");
+    const settingsView = document.getElementById("settingsView");
     const detailView = document.getElementById("detailView");
     const successView = document.getElementById("successView");
     const sectionContainer = document.getElementById("sectionContainer");
@@ -774,13 +922,17 @@
 
     document.getElementById("formTab").addEventListener("click", () => showView("form"));
     document.getElementById("dashboardTab").addEventListener("click", () => showView("dashboard"));
+    document.getElementById("settingsTab").addEventListener("click", () => showView("settings"));
     document.getElementById("prevBtn").addEventListener("click", () => changeSection(-1));
     document.getElementById("nextBtn").addEventListener("click", () => changeSection(1));
+    document.getElementById("copyPreviousBtn").addEventListener("click", copyPreviousShift);
     document.getElementById("draftBtn").addEventListener("click", saveDraft);
     document.getElementById("resetBtn").addEventListener("click", resetForm);
     document.getElementById("newReportBtn").addEventListener("click", () => { resetForm(false); showView("form"); });
     document.getElementById("reportForm").addEventListener("submit", submitReport);
     document.getElementById("exportBtn").addEventListener("click", exportCsv);
+    document.getElementById("saveSettingsBtn").addEventListener("click", saveSettingsFromForm);
+    document.getElementById("resetSettingsBtn").addEventListener("click", resetSettings);
     ["filterDate", "filterShift", "filterSupervisor", "filterIssue"].forEach(id => document.getElementById(id).addEventListener("input", renderDashboard));
 
     renderSteps();
@@ -791,14 +943,64 @@
       return Array.isArray(value) && value.length > 0 && !value.includes(noneLabel);
     }
 
+    function loadSettings() {
+      const saved = localStorage.getItem(settingsKey);
+      if (!saved) return structuredClone(defaultSettings);
+      const parsed = JSON.parse(saved);
+      return { ...structuredClone(defaultSettings), ...parsed };
+    }
+
+    function renderSettings() {
+      document.getElementById("settingsSupervisors").value = appSettings.supervisors.join("\n");
+      document.getElementById("settingsAreas").value = appSettings.areas.join("\n");
+      document.getElementById("settingsShifts").value = appSettings.shifts.join("\n");
+      document.getElementById("settingsDepartments").value = appSettings.departments.join("\n");
+      document.getElementById("settingsIssueTypes").value = appSettings.issueTypes.join("\n");
+      document.getElementById("settingsMssTasks").value = appSettings.mssTasks.join("\n");
+      document.getElementById("settingsDeepCleanTypes").value = appSettings.deepCleanTypes.join("\n");
+    }
+
+    function saveSettingsFromForm() {
+      appSettings = {
+        supervisors: lines("settingsSupervisors"),
+        areas: lines("settingsAreas"),
+        shifts: lines("settingsShifts"),
+        departments: lines("settingsDepartments"),
+        issueTypes: lines("settingsIssueTypes"),
+        mssTasks: lines("settingsMssTasks"),
+        deepCleanTypes: lines("settingsDeepCleanTypes")
+      };
+      localStorage.setItem(settingsKey, JSON.stringify(appSettings));
+      renderSteps();
+      renderSection();
+      alert("Settings saved.");
+    }
+
+    function resetSettings() {
+      if (!confirm("Restore default settings?")) return;
+      appSettings = structuredClone(defaultSettings);
+      localStorage.setItem(settingsKey, JSON.stringify(appSettings));
+      renderSettings();
+      renderSteps();
+      renderSection();
+    }
+
+    function lines(id) {
+      const values = document.getElementById(id).value.split(/\r?\n/).map(item => item.trim()).filter(Boolean);
+      return values.length ? values : structuredClone(defaultSettings[id.replace("settings", "").charAt(0).toLowerCase() + id.replace("settings", "").slice(1)] || []);
+    }
+
     function showView(view) {
       formView.classList.toggle("hidden", view !== "form");
       dashboardView.classList.toggle("hidden", view !== "dashboard");
+      settingsView.classList.toggle("hidden", view !== "settings");
       detailView.classList.add("hidden");
       successView.classList.toggle("hidden", view !== "success");
       document.getElementById("formTab").classList.toggle("active", view === "form");
       document.getElementById("dashboardTab").classList.toggle("active", view === "dashboard");
+      document.getElementById("settingsTab").classList.toggle("active", view === "settings");
       if (view === "dashboard") renderDashboard();
+      if (view === "settings") renderSettings();
     }
 
     function renderSteps() {
@@ -834,8 +1036,12 @@
       updateNav();
     }
 
+    function getOptions(field) {
+      return typeof field.options === "function" ? field.options() : field.options || [];
+    }
+
     function renderField(field) {
-      const required = field.required ? " required" : "";
+      const required = isFieldRequired(field) ? " required" : "";
       const full = field.full ? " full" : "";
       const helper = field.helper ? `<small>${field.helper}</small>` : "";
       if (field.type === "radio" || field.type === "checkbox") {
@@ -844,7 +1050,7 @@
           <div class="field${full}">
             <div class="label${required}">${field.label}</div>
             <div class="choices">
-              ${field.options.map(option => `
+              ${getOptions(field).map(option => `
                 <label class="choice">
                   <input type="${type}" name="${field.name}" value="${option}" ${field.required ? "data-required='true'" : ""}>
                   <span>${option}</span>
@@ -869,8 +1075,22 @@
           <div class="field${full}">
             <label class="${required}" for="${field.name}">${field.label}</label>
             <select id="${field.name}" name="${field.name}" ${field.required ? "data-required='true'" : ""}>
-              ${field.options.map(option => `<option value="${option}">${option || "Select"}</option>`).join("")}
+              ${getOptions(field).map(option => `<option value="${option}">${option || "Select"}</option>`).join("")}
             </select>
+          </div>
+        `;
+      }
+
+      if (field.type === "selectText") {
+        return `
+          <div class="field${full}">
+            <label class="${required}" for="${field.name}">${field.label}</label>
+            <select id="${field.name}" name="${field.name}">
+              <option value="">Select</option>
+              ${getOptions(field).map(option => `<option value="${option}">${option}</option>`).join("")}
+              <option value="Other">Other</option>
+            </select>
+            <textarea id="${field.name}Other" name="${field.name}Other" placeholder="Describe another task"></textarea>
           </div>
         `;
       }
@@ -880,7 +1100,7 @@
           <div class="field full">
             <div class="label">${field.label}</div>
             <div class="ratings">
-              ${field.options.map(item => `
+              ${getOptions(field).map(item => `
                 <div class="rating-row">
                   <strong>${item}</strong>
                   <div class="rating-options">
@@ -906,6 +1126,29 @@
         `;
       }
 
+      if (field.type === "areaStatus") {
+        const rows = appSettings.areas.map(area => `
+          <tr>
+            <td><strong>${area}</strong></td>
+            <td><select name="areaStatus_${slug(area)}"><option value="">Select</option><option>Cleaned</option><option>Partially Cleaned</option><option>Not Cleaned</option><option>Verified</option><option>Needs Follow-Up</option><option>N/A</option></select></td>
+            <td><input name="areaNote_${slug(area)}" type="text" placeholder="Notes"></td>
+          </tr>
+        `).join("");
+        return `<div class="field full"><div class="label">${field.label}</div><table class="mini-table"><thead><tr><th>Area</th><th>Status</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+      }
+
+      if (field.type === "workOrders") {
+        return `<div class="field full"><div class="label">${field.label}</div><div id="workOrderRepeater" class="repeater"></div><button class="secondary" type="button" id="addWorkOrderBtn">Add Work Order</button></div>`;
+      }
+
+      if (field.type === "cleaningTime") {
+        return `<div class="field full"><div class="label">${field.label}</div><div id="cleaningTimeRepeater" class="repeater"></div><button class="secondary" type="button" id="addCleaningTimeBtn">Add Time Entry</button></div>`;
+      }
+
+      if (field.type === "photoUploads") {
+        return `<div class="field full"><label for="${field.name}">${field.label}</label><input id="${field.name}" name="${field.name}" type="file" accept="image/*" multiple><select id="photoCategory"><option value="">Photo Category</option><option>Completed MSS</option><option>Food Safety Issues</option><option>Pest Activity</option><option>Equipment Damage</option><option>Before/After Cleaning</option><option>Safety Concerns</option><option>Other</option></select><textarea id="photoNotes" placeholder="Photo notes"></textarea>${helper}</div>`;
+      }
+
       return `
         <div class="field${full}">
           <label class="${required}" for="${field.name}">${field.label}</label>
@@ -921,10 +1164,32 @@
         } else if (field.type === "checkbox") {
           document.querySelectorAll(`[name="${field.name}"]`).forEach(input => input.checked = Array.isArray(formData[field.name]) && formData[field.name].includes(input.value));
         } else if (field.type === "ratings") {
-          field.options.forEach(item => {
+          getOptions(field).forEach(item => {
             const key = ratingKey(item);
             document.querySelectorAll(`[name="${key}"]`).forEach(input => input.checked = String(formData[key] || "") === input.value);
           });
+        } else if (field.type === "selectText") {
+          const select = document.querySelector(`[name="${field.name}"]`);
+          const other = document.querySelector(`[name="${field.name}Other"]`);
+          if (select) select.value = getOptions(field).includes(formData[field.name]) ? formData[field.name] : (formData[field.name] ? "Other" : "");
+          if (other) other.value = select && select.value === "Other" ? formData[field.name] || "" : "";
+        } else if (field.type === "areaStatus") {
+          const areaStatus = formData.areaStatus || {};
+          appSettings.areas.forEach(area => {
+            const status = document.querySelector(`[name="areaStatus_${slug(area)}"]`);
+            const note = document.querySelector(`[name="areaNote_${slug(area)}"]`);
+            if (status) status.value = areaStatus[area]?.status || "";
+            if (note) note.value = areaStatus[area]?.note || "";
+          });
+        } else if (field.type === "workOrders") {
+          renderWorkOrders();
+        } else if (field.type === "cleaningTime") {
+          renderCleaningTimeEntries();
+        } else if (field.type === "photoUploads") {
+          const category = document.getElementById("photoCategory");
+          const notes = document.getElementById("photoNotes");
+          if (category) category.value = formData.photoCategory || "";
+          if (notes) notes.value = formData.photoNotes || "";
         } else if (field.type !== "file") {
           const input = document.querySelector(`[name="${field.name}"]`);
           if (input) input.value = formData[field.name] || "";
@@ -934,15 +1199,41 @@
 
     function bindFieldEvents(fields) {
       fields.forEach(field => {
-        if (field.type === "file") {
+        if (field.type === "file" || field.type === "photoUploads") {
           const input = document.querySelector(`[name="${field.name}"]`);
           input.addEventListener("change", () => {
             formData[field.name] = Array.from(input.files || []).map(file => file.name);
           });
+          const category = document.getElementById("photoCategory");
+          const notes = document.getElementById("photoNotes");
+          if (category) category.addEventListener("input", () => formData.photoCategory = category.value);
+          if (notes) notes.addEventListener("input", () => formData.photoNotes = notes.value);
+          return;
+        }
+        if (field.type === "areaStatus") {
+          document.querySelectorAll("[name^='areaStatus_'], [name^='areaNote_']").forEach(input => input.addEventListener("input", persistVisibleFields));
+          return;
+        }
+        if (field.type === "workOrders") {
+          document.getElementById("addWorkOrderBtn").addEventListener("click", () => {
+            persistVisibleFields();
+            formData.workOrders = formData.workOrders || [];
+            formData.workOrders.push({ issue: "", area: "", number: "", submittedTo: "", priority: "Medium", status: "Open" });
+            renderSection();
+          });
+          return;
+        }
+        if (field.type === "cleaningTime") {
+          document.getElementById("addCleaningTimeBtn").addEventListener("click", () => {
+            persistVisibleFields();
+            formData.cleaningTimeEntries = formData.cleaningTimeEntries || [];
+            formData.cleaningTimeEntries.push({ area: "", cleaningType: "", startTime: "", endTime: "", employees: "", laborHours: "", status: "Completed", notes: "" });
+            renderSection();
+          });
           return;
         }
         const inputs = field.type === "ratings"
-          ? field.options.flatMap(item => Array.from(document.querySelectorAll(`[name="${ratingKey(item)}"]`)))
+          ? getOptions(field).flatMap(item => Array.from(document.querySelectorAll(`[name="${ratingKey(item)}"]`)))
           : Array.from(document.querySelectorAll(`[name="${field.name}"]`));
         inputs.forEach(input => input.addEventListener("input", () => {
           persistVisibleFields();
@@ -961,11 +1252,48 @@
         } else if (field.type === "checkbox") {
           formData[field.name] = Array.from(document.querySelectorAll(`[name="${field.name}"]:checked`)).map(input => input.value);
         } else if (field.type === "ratings") {
-          field.options.forEach(item => {
+          getOptions(field).forEach(item => {
             const key = ratingKey(item);
             const checked = document.querySelector(`[name="${key}"]:checked`);
             formData[key] = checked ? checked.value : "";
           });
+        } else if (field.type === "selectText") {
+          const select = document.querySelector(`[name="${field.name}"]`);
+          const other = document.querySelector(`[name="${field.name}Other"]`);
+          formData[field.name] = select && select.value === "Other" ? (other?.value || "") : (select?.value || "");
+        } else if (field.type === "areaStatus") {
+          formData.areaStatus = {};
+          appSettings.areas.forEach(area => {
+            const status = document.querySelector(`[name="areaStatus_${slug(area)}"]`)?.value || "";
+            const note = document.querySelector(`[name="areaNote_${slug(area)}"]`)?.value || "";
+            if (status || note) formData.areaStatus[area] = { status, note };
+          });
+          formData.areasCleanedToday = Object.entries(formData.areaStatus).filter(([, value]) => ["Cleaned", "Verified"].includes(value.status)).map(([area]) => area);
+        } else if (field.type === "workOrders") {
+          formData.workOrders = Array.from(document.querySelectorAll(".work-order-row")).map(row => ({
+            issue: row.querySelector("[data-wo='issue']").value,
+            area: row.querySelector("[data-wo='area']").value,
+            number: row.querySelector("[data-wo='number']").value,
+            submittedTo: row.querySelector("[data-wo='submittedTo']").value,
+            priority: row.querySelector("[data-wo='priority']").value,
+            status: row.querySelector("[data-wo='status']").value
+          })).filter(order => Object.values(order).some(Boolean));
+        } else if (field.type === "cleaningTime") {
+          formData.cleaningTimeEntries = Array.from(document.querySelectorAll(".cleaning-time-row")).map(row => ({
+            area: row.querySelector("[data-time='area']").value,
+            cleaningType: row.querySelector("[data-time='cleaningType']").value,
+            startTime: row.querySelector("[data-time='startTime']").value,
+            endTime: row.querySelector("[data-time='endTime']").value,
+            employees: row.querySelector("[data-time='employees']").value,
+            laborHours: row.querySelector("[data-time='laborHours']").value,
+            status: row.querySelector("[data-time='status']").value,
+            notes: row.querySelector("[data-time='notes']").value
+          })).filter(entry => Object.values(entry).some(Boolean));
+        } else if (field.type === "photoUploads") {
+          const input = document.querySelector(`[name="${field.name}"]`);
+          if (input?.files) formData[field.name] = Array.from(input.files).map(file => file.name);
+          formData.photoCategory = document.getElementById("photoCategory")?.value || formData.photoCategory || "";
+          formData.photoNotes = document.getElementById("photoNotes")?.value || formData.photoNotes || "";
         } else if (field.type !== "file") {
           const input = document.querySelector(`[name="${field.name}"]`);
           if (input) formData[field.name] = input.value;
@@ -983,7 +1311,7 @@
 
     function validateSection() {
       const missing = sections[currentSection].fields
-        .filter(field => field.required && (!field.show || field.show(formData)))
+        .filter(field => isFieldRequired(field) && (!field.show || field.show(formData)))
         .filter(field => {
           const value = formData[field.name];
           return Array.isArray(value) ? value.length === 0 : !value;
@@ -1014,15 +1342,123 @@
       alert("Draft saved on this device.");
     }
 
+    function copyPreviousShift() {
+      const reports = getReports().filter(report => !String(report.id || "").startsWith("sample"));
+      if (!reports.length) {
+        alert("No previous submitted shift is available on this device.");
+        return;
+      }
+      const latest = reports[0];
+      const keep = {
+        supervisorName: latest.supervisorName,
+        otherSupervisor: latest.otherSupervisor,
+        shift: latest.shift,
+        crewSizeScheduled: latest.crewSizeScheduled,
+        crewSizePresent: latest.crewSizePresent,
+        totalLaborHoursWorked: latest.totalLaborHoursWorked,
+        areaStatus: latest.areaStatus || {},
+        areasCleanedToday: latest.areasCleanedToday || [],
+        outstandingWorkOrders: latest.outstandingWorkOrders || "",
+        openFoodSafetyConcerns: latest.openFoodSafetyConcerns || "",
+        openSanitationConcerns: latest.openSanitationConcerns || "",
+        workOrders: latest.workOrders || [],
+        cleaningTimeEntries: latest.cleaningTimeEntries || []
+      };
+      formData = { ...loadDraft(), ...keep, date: new Date().toISOString().slice(0, 10) };
+      currentSection = 0;
+      renderSection();
+      alert("Previous shift copied. Review and update before submitting.");
+    }
+
+    function isFieldRequired(field) {
+      return field.required || (field.requiredWhen && field.requiredWhen(formData));
+    }
+
+    function renderWorkOrders() {
+      const container = document.getElementById("workOrderRepeater");
+      if (!container) return;
+      const orders = formData.workOrders && formData.workOrders.length ? formData.workOrders : [];
+      container.innerHTML = orders.map((order, index) => `
+        <div class="repeater-item work-order-row">
+          <div class="grid">
+            <div class="field"><label>Issue</label><select data-wo="issue">${["", ...appSettings.issueTypes].map(option => `<option ${order.issue === option ? "selected" : ""}>${option}</option>`).join("")}</select></div>
+            <div class="field"><label>Area</label><select data-wo="area">${["", ...appSettings.areas].map(option => `<option ${order.area === option ? "selected" : ""}>${option}</option>`).join("")}</select></div>
+            <div class="field"><label>Work Order Number</label><input data-wo="number" value="${escapeAttr(order.number || "")}" placeholder="WO number"></div>
+            <div class="field"><label>Submitted To</label><select data-wo="submittedTo">${["", ...appSettings.departments].map(option => `<option ${order.submittedTo === option ? "selected" : ""}>${option}</option>`).join("")}</select></div>
+            <div class="field"><label>Priority</label><select data-wo="priority">${["Low", "Medium", "High", "Urgent"].map(option => `<option ${order.priority === option ? "selected" : ""}>${option}</option>`).join("")}</select></div>
+            <div class="field"><label>Status</label><select data-wo="status">${["Open", "Submitted", "In Progress", "Closed"].map(option => `<option ${order.status === option ? "selected" : ""}>${option}</option>`).join("")}</select></div>
+          </div>
+          <button class="danger" type="button" data-remove-work-order="${index}">Remove</button>
+        </div>
+      `).join("") || `<div class="empty">No work orders added.</div>`;
+      container.querySelectorAll("input, select").forEach(input => input.addEventListener("input", persistVisibleFields));
+      container.querySelectorAll("[data-remove-work-order]").forEach(button => {
+        button.addEventListener("click", () => {
+          persistVisibleFields();
+          formData.workOrders.splice(Number(button.dataset.removeWorkOrder), 1);
+          renderSection();
+        });
+      });
+    }
+
+    function renderCleaningTimeEntries() {
+      const container = document.getElementById("cleaningTimeRepeater");
+      if (!container) return;
+      const entries = formData.cleaningTimeEntries && formData.cleaningTimeEntries.length ? formData.cleaningTimeEntries : [];
+      container.innerHTML = entries.map((entry, index) => `
+        <div class="repeater-item cleaning-time-row">
+          <div class="grid">
+            <div class="field"><label>Area</label><select data-time="area">${["", ...appSettings.areas].map(option => `<option ${entry.area === option ? "selected" : ""}>${option}</option>`).join("")}</select></div>
+            <div class="field"><label>Cleaning Type</label><select data-time="cleaningType">${["", "Daily Cleaning", ...appSettings.deepCleanTypes].map(option => `<option ${entry.cleaningType === option ? "selected" : ""}>${option}</option>`).join("")}</select></div>
+            <div class="field"><label>Start Time</label><input data-time="startTime" type="time" value="${escapeAttr(entry.startTime || "")}"></div>
+            <div class="field"><label>End Time</label><input data-time="endTime" type="time" value="${escapeAttr(entry.endTime || "")}"></div>
+            <div class="field"><label>Employees</label><input data-time="employees" type="number" min="0" value="${escapeAttr(entry.employees || "")}"></div>
+            <div class="field"><label>Labor Hours</label><input data-time="laborHours" type="number" min="0" step="0.25" value="${escapeAttr(entry.laborHours || "")}" placeholder="Auto or manual"></div>
+            <div class="field"><label>Status</label><select data-time="status">${["Completed", "Partially Completed", "Not Completed", "Verified"].map(option => `<option ${entry.status === option ? "selected" : ""}>${option}</option>`).join("")}</select></div>
+            <div class="field"><label>Notes</label><input data-time="notes" value="${escapeAttr(entry.notes || "")}" placeholder="Notes"></div>
+          </div>
+          <button class="danger" type="button" data-remove-cleaning-time="${index}">Remove</button>
+        </div>
+      `).join("") || `<div class="empty">No cleaning time entries added.</div>`;
+      container.querySelectorAll("input, select").forEach(input => {
+        input.addEventListener("input", event => {
+          const row = event.target.closest(".cleaning-time-row");
+          autoCalculateLaborHours(row);
+          persistVisibleFields();
+        });
+      });
+      container.querySelectorAll("[data-remove-cleaning-time]").forEach(button => {
+        button.addEventListener("click", () => {
+          persistVisibleFields();
+          formData.cleaningTimeEntries.splice(Number(button.dataset.removeCleaningTime), 1);
+          renderSection();
+        });
+      });
+    }
+
+    function autoCalculateLaborHours(row) {
+      if (!row) return;
+      const start = row.querySelector("[data-time='startTime']").value;
+      const end = row.querySelector("[data-time='endTime']").value;
+      const employees = Number(row.querySelector("[data-time='employees']").value || 0);
+      const labor = row.querySelector("[data-time='laborHours']");
+      if (!start || !end || !employees) return;
+      const [startHour, startMinute] = start.split(":").map(Number);
+      const [endHour, endMinute] = end.split(":").map(Number);
+      let minutes = (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
+      if (minutes < 0) minutes += 24 * 60;
+      labor.value = ((minutes / 60) * employees).toFixed(2);
+    }
+
     function loadDraft() {
       const draft = localStorage.getItem(draftKey);
       if (draft) return JSON.parse(draft);
-      return { date: new Date().toISOString().slice(0, 10), foodSafetyConcernsIdentified: [], facilityIssuesFound: [], areasCleanedToday: [], structuralIssuesIdentified: [], supportNeededFrom: [], estimatedBenefit: [] };
+      return { date: new Date().toISOString().slice(0, 10), foodSafetyConcernsIdentified: [], facilityIssuesFound: [], areasCleanedToday: [], areaStatus: {}, structuralIssuesIdentified: [], supportNeededFrom: [], estimatedBenefit: [], workOrders: [], deepCleaningTypes: [], deepCleaningAreas: [], cleaningTimeEntries: [] };
     }
 
     function resetForm(confirmReset = true) {
       if (confirmReset && !confirm("Reset the current report?")) return;
-      formData = { date: new Date().toISOString().slice(0, 10), foodSafetyConcernsIdentified: [], facilityIssuesFound: [], areasCleanedToday: [], structuralIssuesIdentified: [], supportNeededFrom: [], estimatedBenefit: [] };
+      formData = { date: new Date().toISOString().slice(0, 10), foodSafetyConcernsIdentified: [], facilityIssuesFound: [], areasCleanedToday: [], areaStatus: {}, structuralIssuesIdentified: [], supportNeededFrom: [], estimatedBenefit: [], workOrders: [], deepCleaningTypes: [], deepCleaningAreas: [], cleaningTimeEntries: [] };
       localStorage.removeItem(draftKey);
       currentSection = 0;
       renderSection();
@@ -1033,7 +1469,7 @@
       persistVisibleFields();
       const missing = [];
       sections.forEach(section => section.fields.forEach(field => {
-        if (!field.required || (field.show && !field.show(formData))) return;
+        if (!isFieldRequired(field) || (field.show && !field.show(formData))) return;
         const value = formData[field.name];
         if (Array.isArray(value) ? value.length === 0 : !value) missing.push(field.label);
       }));
@@ -1044,7 +1480,8 @@
       }
 
       const reports = getReports();
-      const report = { ...formData, id: crypto.randomUUID(), submittedAt: new Date().toISOString(), escalations: getEscalations(formData) };
+      const readiness = calculateReadiness(formData);
+      const report = { ...formData, id: crypto.randomUUID(), submittedAt: new Date().toISOString(), readiness, escalations: getEscalations(formData) };
       reports.unshift(report);
       localStorage.setItem(storageKey, JSON.stringify(reports));
       localStorage.removeItem(draftKey);
@@ -1056,9 +1493,19 @@
     function renderSuccess(report) {
       document.getElementById("successMeta").textContent = `${displaySupervisor(report)} | ${report.date || "No date"} | ${report.shift || "No shift"}`;
       const escalations = report.escalations;
-      document.getElementById("successEscalations").innerHTML = escalations.length
-        ? `<h3>Escalations</h3><div class="meta">${escalations.map(item => `<span class="pill danger">${item}</span>`).join("")}</div>`
-        : `<div class="empty">No escalations flagged on this report.</div>`;
+      const readiness = report.readiness || calculateReadiness(report);
+      document.getElementById("successEscalations").innerHTML = `
+        <div class="meta">
+          <span class="pill ${readiness.level === "Not Ready" ? "danger" : readiness.level === "Ready With Watchouts" ? "warning" : "success"}">${readiness.level}</span>
+          <span class="pill">Readiness Score ${readiness.score}/100</span>
+        </div>
+        ${escalations.length ? `<h3>Escalation Alerts</h3><div class="meta">${escalations.map(item => `<span class="pill danger">${item}</span>`).join("")}</div>` : `<div class="empty">No escalations flagged on this report.</div>`}
+        <div class="summary-grid">
+          <div class="summary-box"><h3>Completed</h3><p>${listValue(report.areasCleanedToday) || "No completed areas recorded."}</p></div>
+          <div class="summary-box"><h3>Open Items</h3><p>${openItems(report).join("<br>") || "No open items recorded."}</p></div>
+          <div class="summary-box"><h3>Support Needed</h3><p>${listValue(report.supportNeededFrom) || "No support requested."}</p></div>
+        </div>
+      `;
     }
 
     function getReports() {
@@ -1102,6 +1549,14 @@
           positiveRecognitionsGiven: "2",
           improvementOpportunitiesIdentified: "Yes",
           estimatedBenefit: ["Water Savings", "Labor Savings"],
+          areaStatus: { "Dryer": { status: "Needs Follow-Up", note: "Exterior detail pending" }, "GP1": { status: "Verified", note: "" } },
+          workOrders: [{ issue: "Facility", area: "GP1", number: "WO-10428", submittedTo: "Maintenance", priority: "High", status: "Submitted" }],
+          deepCleaningPerformed: "Yes",
+          deepCleaningTypes: ["Equipment deep clean"],
+          deepCleaningAreas: ["GP1"],
+          deepCleaningDescription: "Deep clean completed on GP1 transfer points.",
+          deepCleaningVerified: "Yes",
+          cleaningTimeEntries: [{ area: "GP1", cleaningType: "Equipment deep clean", startTime: "22:00", endTime: "23:30", employees: "2", laborHours: "3.00", status: "Verified", notes: "Completed and verified" }],
           safetyRating: "5",
           foodSafetyRating: "4",
           cleaningExecutionRating: "3",
@@ -1109,10 +1564,11 @@
           teamPerformanceRating: "4",
           overallShiftRating: "4"
         }
-      ].map(report => ({ ...report, escalations: getEscalations(report) }));
+      ].map(report => ({ ...report, readiness: calculateReadiness(report), escalations: getEscalations(report) }));
     }
 
     function renderDashboard() {
+      populateFilterOptions();
       const reports = filteredReports();
       renderKpis(reports);
       const list = document.getElementById("responseList");
@@ -1120,6 +1576,29 @@
         list.innerHTML = `<div class="empty">No reports match the current filters.</div>`;
         return;
       }
+      list.innerHTML = renderTrends(reports);
+      const responseHtml = reports.map(report => `
+        <article class="response-card">
+          <div>
+            <div class="response-title">
+              <strong>${displaySupervisor(report)}</strong>
+              <span class="pill">${report.date || ""}</span>
+              <span class="pill">${report.shift || ""}</span>
+              <span class="pill ${readinessClass(report)}">${(report.readiness || calculateReadiness(report)).level}</span>
+              ${report.escalations && report.escalations.length ? `<span class="pill danger">${report.escalations.length} escalation${report.escalations.length > 1 ? "s" : ""}</span>` : `<span class="pill success">No escalations</span>`}
+            </div>
+            <div class="meta">
+              <span class="pill">Overall ${report.overallShiftRating || "N/A"}</span>
+              <span class="pill">MSS ${report.mssTaskCompletedToday || "N/A"}</span>
+              <span class="pill">Safety ${report.safetyExpectationsMet || "N/A"}</span>
+              <span class="pill">Food Safety ${foodStatus(report)}</span>
+            </div>
+          </div>
+          <button class="secondary" type="button" onclick="showDetail('${report.id}')">View</button>
+        </article>
+      `).join("");
+      list.insertAdjacentHTML("beforeend", responseHtml);
+      return;
       list.innerHTML = reports.map(report => `
         <article class="response-card">
           <div>
@@ -1159,17 +1638,26 @@
       });
     }
 
+    function populateFilterOptions() {
+      const currentShift = document.getElementById("filterShift").value;
+      document.getElementById("filterShift").innerHTML = `<option value="">All shifts</option>${appSettings.shifts.map(shift => `<option ${currentShift === shift ? "selected" : ""}>${shift}</option>`).join("")}`;
+    }
+
     function renderKpis(reports) {
       const count = reports.length || 1;
       const safetyCompliance = Math.round((reports.filter(r => r.safetyExpectationsMet === "Yes" && r.safetyConcernType === "None").length / count) * 100);
       const mssCompletion = Math.round((reports.filter(r => r.mssTaskCompletedToday === "Yes").length / count) * 100);
       const foodIssues = reports.filter(r => hasIssue(r.foodSafetyConcernsIdentified, "No Issues")).length;
-      const workOrders = reports.filter(r => r.facilityWorkOrderSubmitted === "Yes" || r.pestWorkOrderSubmitted === "Yes").length;
+      const workOrders = reports.reduce((sum, r) => sum + (Array.isArray(r.workOrders) ? r.workOrders.length : 0), 0) + reports.filter(r => r.facilityWorkOrderSubmitted === "Yes" || r.pestWorkOrderSubmitted === "Yes").length;
       const coaching = reports.reduce((sum, r) => sum + Number(r.employeesCoachedToday || 0), 0);
       const avgRating = average(reports.map(r => Number(r.overallShiftRating || 0)).filter(Boolean));
       const pestFindings = reports.filter(r => r.pestActivityObserved && r.pestActivityObserved !== "No").length;
       const labor = reports.reduce((sum, r) => sum + Number(r.totalLaborHoursWorked || 0), 0);
+      const trackedCleaningHours = reports.reduce((sum, r) => sum + (r.cleaningTimeEntries || []).reduce((inner, entry) => inner + Number(entry.laborHours || 0), 0), 0);
+      const deepCleans = reports.filter(r => r.deepCleaningPerformed === "Yes").length;
+      const ready = reports.filter(r => (r.readiness || calculateReadiness(r)).level === "Ready").length;
       const items = [
+        ["Shift Readiness", `${Math.round((ready / count) * 100)}%`],
         ["Safety Compliance", `${safetyCompliance}%`],
         ["MSS Completion", `${mssCompletion}%`],
         ["Food Safety Issues", foodIssues],
@@ -1177,7 +1665,9 @@
         ["Coaching Interactions", coaching],
         ["Average Overall Rating", avgRating || "N/A"],
         ["Pest Findings", pestFindings],
-        ["Labor Hours", labor]
+        ["Labor Hours", labor],
+        ["Tracked Cleaning Hours", trackedCleaningHours.toFixed(1)],
+        ["Deep Cleans", deepCleans]
       ];
       document.getElementById("kpiGrid").innerHTML = items.map(([label, value]) => `<div class="kpi"><strong>${value}</strong><span>${label}</span></div>`).join("");
     }
@@ -1212,7 +1702,7 @@
       const items = [];
       section.fields.forEach(field => {
         if (field.type === "ratings") {
-          field.options.forEach(item => items.push([item, report[ratingKey(item)]]));
+          getOptions(field).forEach(item => items.push([item, report[ratingKey(item)]]));
         } else if (field.type === "file") {
           items.push([field.label, listValue(report[field.name])]);
         } else {
@@ -1251,6 +1741,61 @@
       return (values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(1);
     }
 
+    function calculateReadiness(report) {
+      let score = 100;
+      if (report.safetyExpectationsMet === "No" || (report.safetyConcernType && report.safetyConcernType !== "None")) score -= 30;
+      if (hasIssue(report.foodSafetyConcernsIdentified, "No Issues")) score -= 25;
+      if (hasIssue(report.foodSafetyConcernsIdentified, "No Issues") && report.qaNotified !== "Yes") score -= 15;
+      if (report.pestActivityObserved && report.pestActivityObserved !== "No") score -= 20;
+      if (report.productionCleaningCompleted === "Partially") score -= 15;
+      if (report.productionCleaningCompleted === "No") score -= 35;
+      if (report.mssTaskCompletedToday === "No" || report.mssVerificationCompleted === "No" || report.overdueMssItemsIdentified === "Yes") score -= 15;
+      if (report.equipmentNotReadyForProduction) score -= 20;
+      if (report.deepCleaningPerformed === "Yes" && report.deepCleaningVerified === "No") score -= 10;
+      if ((report.cleaningTimeEntries || []).some(entry => ["Partially Completed", "Not Completed"].includes(entry.status))) score -= 10;
+      const areaIssues = Object.values(report.areaStatus || {}).filter(item => ["Not Cleaned", "Needs Follow-Up", "Partially Cleaned"].includes(item.status)).length;
+      score -= areaIssues * 5;
+      score = Math.max(0, score);
+      return { score, level: score >= 90 ? "Ready" : score >= 70 ? "Ready With Watchouts" : "Not Ready" };
+    }
+
+    function readinessClass(report) {
+      const level = (report.readiness || calculateReadiness(report)).level;
+      return level === "Ready" ? "success" : level === "Ready With Watchouts" ? "warning" : "danger";
+    }
+
+    function openItems(report) {
+      const items = [];
+      if (report.equipmentNotReadyForProduction) items.push(`Equipment: ${report.equipmentNotReadyForProduction}`);
+      if (report.outstandingWorkOrders) items.push(`Work orders: ${report.outstandingWorkOrders}`);
+      if (report.openFoodSafetyConcerns) items.push(`Food safety: ${report.openFoodSafetyConcerns}`);
+      if (report.openSanitationConcerns) items.push(`Sanitation: ${report.openSanitationConcerns}`);
+      (report.workOrders || []).filter(order => order.status !== "Closed").forEach(order => items.push(`${order.number || "Work order"}: ${order.issue || "Issue"} ${order.area ? `at ${order.area}` : ""}`));
+      return items;
+    }
+
+    function renderTrends(reports) {
+      const issueCounts = {};
+      const areaCounts = {};
+      reports.forEach(report => {
+        (report.escalations || getEscalations(report)).forEach(item => issueCounts[item] = (issueCounts[item] || 0) + 1);
+        Object.entries(report.areaStatus || {}).forEach(([area, value]) => {
+          if (["Not Cleaned", "Needs Follow-Up", "Partially Cleaned"].includes(value.status)) areaCounts[area] = (areaCounts[area] || 0) + 1;
+        });
+      });
+      return `
+        <div class="trend-grid">
+          <div class="summary-box"><h3>Top Escalations</h3>${rankedList(issueCounts)}</div>
+          <div class="summary-box"><h3>Repeat Area Issues</h3>${rankedList(areaCounts)}</div>
+        </div>
+      `;
+    }
+
+    function rankedList(counts) {
+      const rows = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      return rows.length ? rows.map(([label, count]) => `<p><strong>${count}</strong> ${label}</p>`).join("") : "<p>No trends yet.</p>";
+    }
+
     function getEscalations(report) {
       const escalations = [];
       if (report.safetyExpectationsMet === "No" || (report.safetyConcernType && report.safetyConcernType !== "None")) escalations.push("Safety issue");
@@ -1259,7 +1804,17 @@
       if (report.pestActivityObserved && report.pestActivityObserved !== "No") escalations.push("Pest activity");
       if (["No", "Partially"].includes(report.productionCleaningCompleted)) escalations.push("Incomplete cleaning");
       if (report.mssTaskCompletedToday === "No" || report.mssVerificationCompleted === "No" || report.overdueMssItemsIdentified === "Yes") escalations.push("MSS issue");
+      if (report.deepCleaningPerformed === "Yes" && report.deepCleaningVerified === "No") escalations.push("Deep cleaning not verified");
+      (report.cleaningTimeEntries || []).forEach(entry => {
+        if (["Partially Completed", "Not Completed"].includes(entry.status)) escalations.push(`${entry.area || "Cleaning"}: ${entry.status}`);
+      });
       if (hasIssue(report.facilityIssuesFound, "None") && report.facilityWorkOrderSubmitted === "No") escalations.push("Facility issue without work order");
+      Object.entries(report.areaStatus || {}).forEach(([area, value]) => {
+        if (["Not Cleaned", "Needs Follow-Up", "Partially Cleaned"].includes(value.status)) escalations.push(`${area}: ${value.status}`);
+      });
+      (report.workOrders || []).forEach(order => {
+        if (!order.number && order.issue) escalations.push("Work order missing number");
+      });
       return escalations;
     }
 
@@ -1272,12 +1827,26 @@
     }
 
     function listValue(value) {
-      return Array.isArray(value) ? value.join("; ") : value;
+      if (Array.isArray(value)) {
+        return value.map(item => typeof item === "object" ? Object.entries(item).map(([key, val]) => `${key}: ${val}`).join(" | ") : item).join("; ");
+      }
+      if (value && typeof value === "object") {
+        return Object.entries(value).map(([key, val]) => `${key}: ${typeof val === "object" ? Object.entries(val).map(([innerKey, innerVal]) => `${innerKey} ${innerVal}`).join(", ") : val}`).join("; ");
+      }
+      return value;
     }
 
     function ratingKey(label) {
       const base = label.replace(/[^a-z0-9]+(.)/gi, (_, chr) => chr.toUpperCase()).replace(/[^a-z0-9]/gi, "").replace(/^./, chr => chr.toLowerCase());
       return base.endsWith("Rating") ? base : `${base}Rating`;
+    }
+
+    function slug(value) {
+      return String(value).replace(/[^a-z0-9]/gi, "_");
+    }
+
+    function escapeAttr(value) {
+      return String(value).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
     }
   </script>
 </body>
